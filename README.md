@@ -4,7 +4,7 @@ PlatformIO firmware for an Arduino Mega 2560 used to test NOVA AGV low-level con
 
 ## Hardware used
 - Arduino Mega 2560
-- 2x DC motors + motor drivers (PWM, DIR, STOP)
+- 2x BLDC motors + motor drivers (PWM, DIR, STOP)
 - 2x hall sensors for wheel ticks
 - MPU6050 IMU over I2C
 
