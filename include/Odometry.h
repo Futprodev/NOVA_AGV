@@ -20,15 +20,16 @@ inline void initOdometry(OdometryState &odom) {
 inline void updateOdometry(OdometryState &odom, float dL, float dR, float baseWidth)
 {
   float dCenter = 0.5f * (dL + dR);
-  float dTheta = (dR - dL) / baseWidth;
+  float dTheta  = (dR - dL) / baseWidth;
+
+  float theta_mid = odom.theta + 0.5f * dTheta;
+
+  odom.x += dCenter * cosf(theta_mid);
+  odom.y += dCenter * sinf(theta_mid);
 
   odom.theta += dTheta;
+  if (odom.theta > PI)       odom.theta -= 2.0f * PI;
+  else if (odom.theta < -PI) odom.theta += 2.0f * PI;
 
-  if (odom.theta > PI) odom.theta -= 2.0f * PI;
-  else if (odom.theta < -PI) odom.theta += 2.0f *PI;
-
-  odom.x = dCenter * cosf(odom.theta);
-  odom.y += dCenter * sinf(odom.theta);
-
-  odom.totalDistance += dCenter;
+  odom.totalDistance += fabsf(dCenter);
 }

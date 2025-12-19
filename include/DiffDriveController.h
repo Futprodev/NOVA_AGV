@@ -36,7 +36,7 @@ class DiffDriveController {
       _right.setRun(false);
       delay(2500);
       _left.setDirection(true);
-      _right.setDirection(false); 
+      _right.setDirection(true);  
     }
 
     void setYaw(float yawRad) {
@@ -86,6 +86,18 @@ class DiffDriveController {
       _wheelR.vMeas = vR_meas;
     }
 
+    // Direct wheel-velocity control (used for rotation)
+    void setWheelRefs(float vL_ref, float vR_ref) {
+      _wheelL.vRef = vL_ref;
+      _wheelR.vRef = vR_ref;
+    }
+
+    // Run only the PD on current refs (no trapezoid / distance logic)
+    void updatePD(float dt) {
+      updateWheelPD(_wheelL, _left, dt);
+      updateWheelPD(_wheelR, _right, dt);
+    }
+
     void update(float dt) {
       if(_moving) {
         float remaining = _targetDistance - _odom.totalDistance;
@@ -109,17 +121,17 @@ class DiffDriveController {
           float vL_ref = _vCmd;
           float vR_ref = _vCmd;
 
-          if (_useHeading && _vCmd > 0.0f) {
+          if (_useHeading && _vCmd > 0.05f) {
             float yawErr = _yaw - _yawStart;
             float w_corr = -K_HEADING * yawErr;
             float halfB = BASE_WIDTH * 0.5f;
 
-            float vL_ref = _vCmd - w_corr * halfB;
-            float vR_ref = _vCmd + w_corr * halfB;
+            vL_ref = _vCmd - w_corr * halfB;
+            vR_ref = _vCmd + w_corr * halfB;
           }
 
-            _wheelL.vRef = _vCmd;
-            _wheelR.vRef = _vCmd;
+            _wheelL.vRef = vL_ref;
+            _wheelR.vRef = vR_ref;
           }
         }
       
@@ -153,16 +165,30 @@ class DiffDriveController {
     bool  _useHeading; 
 
     void updateWheelPD(WheelState &w, MotorDriver &motor, float dt) {
-      float err  = w.vRef - w.vMeas;
+      // 1) Split into sign + magnitude
+      float vRef   = w.vRef;
+      float vMeas  = w.vMeas;   // from odometry (always ≥ 0 in your case)
+
+      bool  forward   = (vRef >= 0.0f);
+      float vRefMag   = fabs(vRef);
+      float vMeasMag  = fabs(vMeas);
+
+      // 2) PD on magnitudes
+      float err  = vRefMag - vMeasMag;
       float derr = (err - w.prevErr) / dt;
       w.prevErr  = err;
 
       float du = Kp_SPEED * err + Kd_SPEED * derr;
+
       w.pwmCmd += (int)du;
       w.pwmCmd = clampValue<int>(w.pwmCmd, 0, PWM_MAX);
 
+      // 3) Apply direction + PWM
+      motor.setDirection(forward);
+      motor.setRun(true);
       motor.setPWM(w.pwmCmd);
     }
+
 
     void stopNow() {
       _wheelL.vRef = 0.0f;

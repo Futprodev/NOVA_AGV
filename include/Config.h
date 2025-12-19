@@ -10,9 +10,9 @@ constexpr float TICKS_PER_REV = 15;
 constexpr uint32_t CONTROL_PERIOD_MS = 50;
 
 // pd gains
-constexpr float Kp_SPEED = 40.0f;
+constexpr float Kp_SPEED = 20.0f;
 constexpr float Kd_SPEED = 0.0f;
-constexpr float K_HEADING = 40.0f;
+constexpr float K_HEADING = 3.0f;
 
 // pins
 constexpr int PIN_PWM_L  = 5;    // to module S (ANALOG)

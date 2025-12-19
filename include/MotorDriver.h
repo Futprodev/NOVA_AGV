@@ -4,12 +4,15 @@
 
 class MotorDriver {
   public:
-    MotorDriver(int pwmPin, int dirPin, int stopPin)
+    // polarity = false  -> normal wiring
+    // polarity = true   -> flipped wiring (invert logical forward)
+    MotorDriver(int pwmPin, int dirPin, int stopPin, bool polarity)
     : _pwmPin(pwmPin),
       _dirPin(dirPin),
       _stopPin(stopPin),
       _pwmCmd(0),
-      _forward(true)
+      _forward(true),
+      _polarity(polarity)
     {}
 
     void begin() {
@@ -17,18 +20,23 @@ class MotorDriver {
       if (_stopPin >= 0) pinMode(_stopPin, OUTPUT);
       pinMode(_pwmPin, OUTPUT);
 
-      // Default: enable driver & set some direction
-      setRun(false);        // STOP = LOW (run) for your board
-      setDirection(true);  // logical "forward" = DIR LOW (we'll define that)
+      // start stopped
+      setRun(false);
+      setDirection(true);   // logical forward
       setPWM(0);
     }
 
-    // forward = true  -> DIR LOW
-    // forward = false -> DIR HIGH
+    // forward = true  -> logical forward
+    // polarity         adjusts how that maps to pin level
     void setDirection(bool forward) {
       _forward = forward;
+
       if (_dirPin >= 0) {
-        digitalWrite(_dirPin, forward ? LOW : HIGH);
+        // XOR with polarity: if polarity is true, flip the meaning
+        bool logicalForward = forward ^ _polarity;
+
+        // keep your original LOW/HIGH mapping
+        digitalWrite(_dirPin, logicalForward ? LOW : HIGH);
       }
     }
 
@@ -54,4 +62,5 @@ class MotorDriver {
     int  _stopPin;
     int  _pwmCmd;
     bool _forward;
+    bool _polarity;   // NEW
 };

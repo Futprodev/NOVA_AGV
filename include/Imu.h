@@ -29,7 +29,7 @@ public:
   // Call this every loop with dt [s]
   void update(float dt) {
     _mpu.update();
-    float yawDeg = _mpu.getAngleZ(); // your chosen axis
+    float yawDeg = _mpu.getAngleZ(); // axis
     float yawRaw = yawDeg * PI / 180.0f;
 
     static float yawFilt = 0.0f;
